@@ -712,22 +712,26 @@ fn imgui_extract_frame_system(
     };
 
     // Get the current display scale and ImGuiContext
-    let (display_scale, mut cpu_context) = {
+    let (display_scale, cpu_context) = {
         let mut system_state: SystemState<Query<&Window, With<PrimaryWindow>>> =
             SystemState::new(&mut world);
         let primary_window = system_state.get(&world);
         if let Ok(single) = primary_window.get_single() {
             (
                 single.scale_factor(),
-                world.get_non_send_resource_mut::<ImguiContext>().unwrap(),
+                world.get_non_send_resource_mut::<ImguiContext>(),
             )
         } else {
             // Fall back to the previously captured display scale. This can happen during app shutdown.
             (
                 context.display_scale,
-                world.get_non_send_resource_mut::<ImguiContext>().unwrap(),
+                world.get_non_send_resource_mut::<ImguiContext>(),
             )
         }
+    };
+
+    let Some(mut cpu_context) = cpu_context else {
+        return;
     };
 
     // Determine the current texture format of the primary window
